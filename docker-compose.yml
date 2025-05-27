@@ -4,5 +4,5 @@ services:
     image: voicerecognition
     container_name: voicerecognition_container
     ports:
-      - "85:85"
+      - "80:80"
     restart: unless-stopped
