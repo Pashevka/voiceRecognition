@@ -14,8 +14,8 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entryPoints.web.forwardedHeaders.insecure"
-      - "--entryPoints.websecure.forwardedHeaders.insecure"
+      - "--entrypoints.web.forwardedHeaders.insecure"
+      - "--entrypoints.websecure.forwardedHeaders.insecure"
     ports:
       - "80:80"
       - "443:443"
