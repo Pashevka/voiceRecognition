@@ -5,15 +5,26 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
+      - letsencrypt:/letsencrypt
       - "/var/run/docker.sock:/var/run/docker.sock"
   app:
     image: voicerecognition
     labels:
+      - "traefik.enable=true"
       - "traefik.http.routers.app.rule=Host(`lavanpa.online`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=myresolver"
     deploy:
       replicas: 3
     restart: unless-stopped
+volumes:
+  letsencrypt:
