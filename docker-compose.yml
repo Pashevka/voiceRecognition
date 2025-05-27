@@ -2,10 +2,10 @@ services:
   reverse_proxy:
     image: traefik:v3.1
     command:
-      # Enable debug logs
+      # Debugging
       - "--log.level=DEBUG"
       
-      # Docker provider setup
+      # Docker provider
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       
@@ -13,24 +13,18 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       
-      # HTTP → HTTPS redirect (IPv4)
+      # HTTP → HTTPS redirect
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       
-      # Let’s Encrypt (HTTP Challenge, IPv4-only)
+      # Let’s Encrypt (HTTP Challenge)
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       
-      # DISABLE IPv6 completely (critical!)
-      - "--entrypoints.web.http.http2.disable=true"
-      - "--entrypoints.web.http3.enable=false"
-      - "--entrypoints.websecure.http.http2.disable=true"
-      - "--entrypoints.websecure.http3.enable=false"
-      
-      # Force IPv4 for all requests
-      - "--serversTransport.insecureSkipVerify=true"  # Bypass TLS checks (temporary)
+      # Force IPv4 (critical for non-IPv6 VPS)
+      - "--serversTransport.insecureSkipVerify=true"
     
     ports:
       - "80:80"    # IPv4 HTTP
@@ -56,4 +50,4 @@ volumes:
 
 networks:
   web:
-    external: true  # Run `docker network create web` first!
+    external: true
