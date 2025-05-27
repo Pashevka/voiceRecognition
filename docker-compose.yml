@@ -1,29 +1,34 @@
-version: '3.8'
+version: '3.8'  # Remove this line if using newer Docker Compose
+
 services:
   reverse_proxy:
     image: traefik:v3.1
     command:
       - "--log.level=DEBUG"
-      - "--accesslog=true"
       - "--providers.docker"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
+      # Entrypoints
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirect HTTP → HTTPS
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.web.forwardedHeaders.insecure"
-      - "--entrypoints.websecure.forwardedHeaders.insecure"
+      # ACME (Let's Encrypt) - Force IPv4
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      # Disable IPv6 (if needed)
+      - "--serverstransport.insecureskipverify=true"  # Only for testing
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - "80:80"    # IPv4 HTTP
+      - "443:443"  # IPv4 HTTPS
     volumes:
       - letsencrypt:/letsencrypt
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web
+
   app:
     image: voicerecognition
     labels:
@@ -31,8 +36,12 @@ services:
       - "traefik.http.routers.app.rule=Host(`lavanpa.online`)"
       - "traefik.http.routers.app.entrypoints=websecure"
       - "traefik.http.routers.app.tls.certresolver=myresolver"
-    deploy:
-      replicas: 3
-    restart: unless-stopped
+    networks:
+      - web
+
 volumes:
   letsencrypt:
+
+networks:
+  web:
+    external: true  # Ensure this network exists (`docker network create web`)
