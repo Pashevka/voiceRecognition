@@ -14,4 +14,8 @@ services:
     image: voicerecognition
     labels:
       - "traefik.http.routers.app.rule=Host(`lavanpa.online`)"
+    deploy:
+      modes:
+        - replicated
+      replicas: 3
     restart: unless-stopped
