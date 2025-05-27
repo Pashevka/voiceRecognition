@@ -14,5 +14,4 @@ services:
     image: voicerecognition
     labels:
       - "traefik.http.routers.app.rule=Host(`lavanpa.online`)"
-    container_name: voicerecognition_container
     restart: unless-stopped
