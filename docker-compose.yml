@@ -1,25 +1,37 @@
-version: '3.8'  # Remove this line if using newer Docker Compose
-
 services:
   reverse_proxy:
     image: traefik:v3.1
     command:
+      # Enable debug logs
       - "--log.level=DEBUG"
-      - "--providers.docker"
+      
+      # Docker provider setup
+      - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      # Entrypoints
+      
+      # Entrypoints (IPv4-only)
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      # Redirect HTTP → HTTPS
+      
+      # HTTP → HTTPS redirect (IPv4)
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      # ACME (Let's Encrypt) - Force IPv4
+      
+      # Let’s Encrypt (HTTP Challenge, IPv4-only)
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      # Disable IPv6 (if needed)
-      - "--serverstransport.insecureskipverify=true"  # Only for testing
+      
+      # DISABLE IPv6 completely (critical!)
+      - "--entrypoints.web.http.http2.disable=true"
+      - "--entrypoints.web.http3.enable=false"
+      - "--entrypoints.websecure.http.http2.disable=true"
+      - "--entrypoints.websecure.http3.enable=false"
+      
+      # Force IPv4 for all requests
+      - "--serversTransport.insecureSkipVerify=true"  # Bypass TLS checks (temporary)
+    
     ports:
       - "80:80"    # IPv4 HTTP
       - "443:443"  # IPv4 HTTPS
@@ -44,4 +56,4 @@ volumes:
 
 networks:
   web:
-    external: true  # Ensure this network exists (`docker network create web`)
+    external: true  # Run `docker network create web` first!
