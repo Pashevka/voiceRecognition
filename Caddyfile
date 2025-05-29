@@ -1,0 +1,6 @@
+{
+    admin :2019  # Enable Caddy’s API
+}
+lavanpa.online {
+    reverse_proxy app:80
+}

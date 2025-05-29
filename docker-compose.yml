@@ -1,53 +1,32 @@
 services:
-  reverse_proxy:
-    image: traefik:v3.1
-    command:
-      # Debugging
-      - "--log.level=DEBUG"
-      
-      # Docker provider
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      
-      # Entrypoints (IPv4-only)
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      
-      # HTTP → HTTPS redirect
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      
-      # Let’s Encrypt (HTTP Challenge)
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.myresolver.acme.email=pavel@lavanpa.online"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      
-      # Force IPv4 (critical for non-IPv6 VPS)
-      - "--serversTransport.insecureSkipVerify=true"
-    
-    ports:
-      - "80:80"    # IPv4 HTTP
-      - "443:443"  # IPv4 HTTPS
-    volumes:
-      - letsencrypt:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - web
-
   app:
     image: voicerecognition
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`lavanpa.online`)"
-      - "traefik.http.routers.app.entrypoints=websecure"
-      - "traefik.http.routers.app.tls.certresolver=myresolver"
+    container_name: voicerecognition_container
     networks:
-      - web
+      - caddy
+    expose:             # Only expose to Docker network (no host port)
+      - "80"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"        # Host ports for HTTP/HTTPS
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile  # Bind mount your local Caddyfile
+      - caddy_data:/data                 # Persistent certs
+      - caddy_config:/config              # Caddy’s config DB
+    networks:
+      - caddy
+    # In docker-compose.yml (caddy service)
+    environment:
+      - CADDY_ADMIN=:2019
 
 volumes:
-  letsencrypt:
+  caddy_data:          # Caddy’s TLS certificates
+  caddy_config:        # Caddy’s auto-saved config
 
 networks:
-  web:
-    external: true
+  caddy:
