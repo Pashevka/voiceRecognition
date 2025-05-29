@@ -14,6 +14,7 @@ services:
     ports:
       - "80:80"        # Host ports for HTTP/HTTPS
       - "443:443"
+      - "127.0.0.1:2019:2019"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile  # Bind mount your local Caddyfile
       - caddy_data:/data                 # Persistent certs
